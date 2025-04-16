@@ -1,5 +1,3 @@
-# import azure.cognitiveservices.speech as speechsdk
-# from pydub import AudioSegment
 import requests
 import time
 import zipfile
@@ -14,28 +12,6 @@ class Speech:
         self.azure_key = azure_key
         self.region = region
 
-    # def text_to_mp3(self, text: str, voice, path):
-
-    #     speech_config = speechsdk.SpeechConfig(subscription=self.azure_key, region=self.region);
-    #     speech_config.speech_synthesis_voice_name = voice
-
-    #     speech_config.set_speech_synthesis_output_format(speechsdk.SpeechSynthesisOutputFormat.Audio16Khz32KBitRateMonoMp3)
-
-    #     filename = path + 'audio2.mp3'
-
-    #     audio_config = speechsdk.audio.AudioOutputConfig(filename=filename)
-    #     synthesizer = speechsdk.SpeechSynthesizer(speech_config=speech_config, audio_config=audio_config)
-
-    #     audio = synthesizer.speak_text_async(text).get()
-
-    #     if audio.reason == speechsdk.ResultReason.SynthesizingAudioCompleted:
-    #         print("Speech synthesized  audio was saved to [{}]".format(filename))
-    #     elif audio.reason == speechsdk.ResultReason.Canceled:
-    #         cancellation_details = audio.cancellation_details
-    #         print("Speech synthesis canceled: {}".format(cancellation_details.reason))
-    #         if cancellation_details.reason == speechsdk.CancellationReason.Error:
-    #             print("Error details: {}".format(cancellation_details.error_details))
-
     def text_to_mp3_long(self, text: str, voice, path):
 
         key = secrets.token_hex(20)
@@ -46,26 +22,6 @@ class Speech:
             "Content-Type": "application/json",
         }
 
-        # payload = {
-        #     "displayName": "batch synthesis sample",
-        #     "description": "my plain text test",
-        #     "textType": "PlainText",
-        #     "inputs": [
-        #         {
-        #             "text": text
-        #         },
-        #     ],
-        #     "properties": {
-        #         "outputFormat": "riff-24khz-16bit-mono-pcm",
-        #         "wordBoundaryEnabled": False,
-        #         "sentenceBoundaryEnabled": False,
-        #         "concatenateResult": False,
-        #         "decompressOutputFiles": False,
-        #     },
-        #     "synthesisConfig": {
-        #         "Voice": voice
-        #     }
-        # }
         payload = {
             "description": "my test",
             "inputKind": "PlainText",
@@ -101,7 +57,6 @@ class Speech:
             exit(0)
         print(id)
 
-        # url = f"https://{self.region}.customvoice.api.speech.microsoft.com/api/texttospeech/3.1-preview1/batchsynthesis/{id}"
         url = f"https://{self.region}.api.cognitive.microsoft.com/texttospeech/batchsyntheses/{key}?api-version=2024-04-01"
         response = requests.get(url, headers=headers)
         print (response.json())
@@ -137,10 +92,5 @@ class Speech:
         source_file = extracted_dir + "/0001.wav"
         destination_file = path + "audio2.mp3"
         ffmpeg.input(source_file).output(destination_file, format="mp3").run()
-        # wav_file = AudioSegment.from_file(source_file, format="wav")
-        # mp3_file = wav_file.export(destination_file, format="mp3")
-        # mp3_file.close()
-
-        # shutil.move(source_file, destination_file)
 
         print("DONE!")

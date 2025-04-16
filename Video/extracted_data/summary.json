@@ -1,5 +1,5 @@
 {
-  "jobID":  "d788db3c-ffa8-4a4c-9209-54822174700b",
+  "jobID":  "eea3b50a-1e2b-499b-838c-29557a10380a",
   "status":  "Succeeded",
   "results":  [
     {
@@ -9,8 +9,8 @@
       "status":  "Succeeded",
       "audioFileName":  "0001.wav",
       "properties":  {
-        "sizeInBytes":  "2329844",
-        "durationInMilliseconds":  "48537"
+        "sizeInBytes":  "2362844",
+        "durationInMilliseconds":  "49225"
       }
     }
   ]

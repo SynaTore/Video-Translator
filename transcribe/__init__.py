@@ -32,20 +32,11 @@ class Transcribe:
 
         if (option == 1) :
 
-            # audio_uplod = self.__upload_audio(audio_file);
-
             transcribe_url  = self.__request_transcribe_long(language, option)
 
             self.__wait_for_completion_long(transcribe_url[0]);
 
             return self.__get_text_long(transcribe_url[1]);
-
-        # else :
-        #     transcribe_url  = self.__request_transcribe_long(language, option)
-
-        #     self.__wait_for_completion_long(transcribe_url[0]);
-
-        #     return self.__get_subtitle(transcribe_url[1]);
 
     def translate_long(self, transcribe, target_language):
         header = {
@@ -108,8 +99,6 @@ class Transcribe:
                 "contentUrls": [
                     self.azure_api_container_url2
                 ],
-                # "wordLevelTimestampsEnabled": "true",
-                # "contentContainerUrl": self.azure_api_container_url2,
                 "locale": language,
                 "displayName": "My Transcription",
                 "model": None
@@ -146,7 +135,6 @@ class Transcribe:
 
         response = requests.get(api_url, headers=headers)
 
-        # # Check the response status
         if response.status_code == 200:
             print("GET request was successful.")
             contentUrl = response.json()['values'][0]['links']['contentUrl']
@@ -164,7 +152,6 @@ class Transcribe:
 
         response = requests.get(api_url, headers=headers)
 
-        # # Check the response status
         if response.status_code == 200:
             print("GET request was successful.")
             print (response.json())

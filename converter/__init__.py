@@ -1,6 +1,6 @@
 from gtts import gTTS
 from moviepy import *
-
+from moviepy.video.io.VideoFileClip import VideoFileClip
 
 class Converter:
 

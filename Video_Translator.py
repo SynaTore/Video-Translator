@@ -5,6 +5,7 @@ from converter import Converter
 from transcribe import Transcribe
 from speech import Speech
 import os
+import mix
 
 os.environ["FFMPEG_BINARY"] = "C:\ProgramData\chocolatey\lib\ffmpeg\tools\ffmpeg\bin\ffmpeg.exe"
 class VideoTranslate:
@@ -20,11 +21,12 @@ class VideoTranslate:
         transcribe = self.__get_text_from_long_audio(settings.VIDEOS_PATH + "audio1.mp3", "en-US")
         translated = self.__translate_long(transcribe, translation_language).replace('\n', '').replace('\r', '');
         print(translated)
-        self.__translated_to_speech(translated, voice)
-    #     # self.__wait_upload()
-    #     # subtitle = self.__get_text_from_long_audio(settings.VIDEOS_PATH + "audio2.mp3", target_language, 2)
-    #     # self.convert_to_srt(subtitle, settings.VIDEOS_PATH + "subtitle_" + target_language + ".srt" )
-    #     # self.__create_the_new_video(settings.VIDEOS_PATH + final_name, settings.VIDEOS_PATH + "audio2.mp3", settings.VIDEOS_PATH + "video_background.mp4")
+        # self.__translated_to_speech(translated, voice)
+        # mix.mixing(self.settings.VIDEOS_PATH + "/test.mp4", self.settings.VIDEOS_PATH + "/extracted_data/0001.wav", self.settings.VIDEOS_PATH + "/mixed.mp4")
+        # self.__wait_upload()
+        subtitle = self.__get_text_from_long_audio(settings.VIDEOS_PATH + "audio2.mp3", target_language, 2)
+        self.convert_to_srt(subtitle, settings.VIDEOS_PATH + "subtitle_" + target_language + ".srt" )
+        self.__create_the_new_video(settings.VIDEOS_PATH + final_name, settings.VIDEOS_PATH + "audio2.mp3", settings.VIDEOS_PATH + "video_background.mp4")
     def __get_url_from_video(self) -> None:
 
         url = input("Please, type the video url: ");
