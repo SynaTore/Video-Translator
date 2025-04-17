@@ -13,16 +13,49 @@ class VideoTranslate:
 
     def __init__(self, settings: any) -> None:
         self.settings = settings
-    def translate_from_url(self, target_language, voice, final_name, translation_language, option):
+        self.video_url = None
 
-        self.__get_url_from_video()
-        video_path = self.__download_video()
-        self.__get_mp3_from_mp4(video_path)
-        transcribe = self.__get_text_from_long_audio(settings.VIDEOS_PATH + "audio1.mp3", "en-US")
-        translated = self.__translate_long(transcribe, translation_language).replace('\n', '').replace('\r', '');
-        self.__translated_to_speech(translated, voice)
-        mix.mixing(self.settings.VIDEOS_PATH + "/test.mp4", self.settings.VIDEOS_PATH + "/extracted_data/0001.wav", self.settings.VIDEOS_PATH + "/mixed.mp4")
-        
+    def translate_from_url(self, source_language, target_language, voice, final_name, translation_language, option):
+        if not self.video_url:
+            raise ValueError("Video URL not set")
+
+        temp_files = []
+        try:
+            video_path = self.__download_video()
+            temp_files.append(video_path)
+            
+            audio_path = settings.VIDEOS_PATH + "audio1.mp3"
+            self.__get_mp3_from_mp4(video_path)
+            temp_files.append(audio_path)
+            
+            transcribe = self.__get_text_from_long_audio(audio_path, source_language)
+            if not transcribe:
+                raise ValueError("Failed to transcribe audio")
+                
+            translated = self.__translate_long(transcribe, translation_language)
+            if not translated:
+                raise ValueError("Failed to translate text")
+            
+            translated = translated.replace('\n', '').replace('\r', '')
+            self.__translated_to_speech(translated, voice)
+            
+            wav_path = settings.VIDEOS_PATH + "/extracted_data/0001.wav"
+            output_path = os.path.join(self.settings.VIDEOS_PATH, final_name)
+            
+            mix.mixing(video_path, wav_path, output_path)
+            return output_path
+            
+        except Exception as e:
+            raise Exception(f"Translation failed: {str(e)}")
+        finally:
+            # Cleanup temporary files
+            for file in temp_files:
+                try:
+                    if os.path.exists(file):
+                        os.remove(file)
+                except:
+                    pass # Ignore cleanup errors
+
     def __get_url_from_video(self) -> None:
 
         url = input("Please, type the video url: ");
@@ -31,16 +64,16 @@ class VideoTranslate:
              self.video_url = url
         else:
              print('the url is not valid');
+
     def __download_video(self) -> str:
+        if not self.video_url:
+            raise ValueError("Video URL not set")
 
         video_path = self.settings.VIDEOS_PATH
+        video = Download(video_path, self.video_url)
+        video_path = video.dowload_YT()
+        return video_path
 
-        if(self.video_url):
-
-             video      = Download(video_path, self.video_url)
-             video_path = video.dowload_YT()
-
-             return video_path
     def __get_mp3_from_mp4(self, video_path: str, audio_name="audio1.mp3") -> str:
 
         converter  = Converter(video_path);
@@ -66,6 +99,4 @@ class VideoTranslate:
 
          speech  = Speech(azure_key, region)
          speech.text_to_mp3_long(text, voice, self.settings.VIDEOS_PATH)
-
-video_translate = VideoTranslate(settings)
-video_translate.translate_from_url('zh-CN', "zh-CN-XiaoxiaoNeural", "video-AR-SA.mp", 'zh', 1)
+         
