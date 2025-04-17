@@ -1,9 +1,10 @@
 import requests;
 import time;
-
+from azure.identity import DefaultAzureCredential
+from azure.storage.blob import BlobServiceClient
 class Transcribe:
 
-    def __init__(self, api_key: str, service_region: str, storage_acc_name: str, container_name: str, azure_translator: str) -> None:
+    def __init__(self, api_key: str, service_region: str, storage_acc_name: str, container_name: str, azure_translator: str, videos_path: str) -> None:
 
         self.api_key = api_key;
         self.upload_endpoint     = 'https://api.assemblyai.com/v2/upload'
@@ -14,29 +15,33 @@ class Transcribe:
         self.azure_api_container_url2 = f"https://{storage_acc_name}.blob.core.windows.net/{container_name}/audio2.mp3"
         self.azure_translator = azure_translator
         self.region = service_region
-
+        self.videos_path = videos_path
+        self.container_name = container_name
+        self.storage_acount_url =  f"https://{storage_acc_name}.blob.core.windows.net/"
         self.headers = self.__headers_for_request()
         self.azure_headers = self.__azure_headers_for_request()
-
-    def transcribe(self, audio_file: str):
-
-        audio_uplod = self.__upload_audio(audio_file);
-
-        transcribe  = self.__request_transcribe(audio_uplod)
-
-        self.__wait_for_completion(transcribe);
-
-        return self.__get_text(transcribe);
 
     def transcribe_long(self, language: str, option):
 
         if (option == 1) :
+            
+            audio_uplod = self.__upload_audio("audio1.mp3");
 
             transcribe_url  = self.__request_transcribe_long(language, option)
 
             self.__wait_for_completion_long(transcribe_url[0]);
 
             return self.__get_text_long(transcribe_url[1]);
+        
+        else :
+            
+            self.__upload_audio("audio2.mp3");
+
+            transcribe_url  = self.__request_transcribe_long(language, option)
+
+            self.__wait_for_completion_long(transcribe_url[0]);
+
+            return self.__get_subtitle(transcribe_url[1]);
 
     def translate_long(self, transcribe, target_language):
         header = {
@@ -60,14 +65,11 @@ class Transcribe:
 
     def __upload_audio(self, audio_file):
 
-       
-       
-        header_for_request = self.__headers_for_request()
-        upload_request = requests.post(url=self.upload_endpoint, 
-                                       headers= header_for_request,
-                                       data= self.__read_file(audio_file));
-
-        return upload_request.json();
+        default_credential = DefaultAzureCredential()
+        blob_service_client = BlobServiceClient(self.storage_acount_url, credential=default_credential)
+        blob_client = blob_service_client.get_blob_client(container=self.container_name, blob=audio_file)
+        with open(file=self.videos_path + audio_file, mode="rb") as data:
+            blob_client.upload_blob(data, overwrite=True)
 
 
 
@@ -99,6 +101,7 @@ class Transcribe:
                 "contentUrls": [
                     self.azure_api_container_url2
                 ],
+                "wordLevelTimestampsEnabled": "true",
                 "locale": language,
                 "displayName": "My Transcription",
                 "model": None

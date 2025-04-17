@@ -89,8 +89,8 @@ class Speech:
                 f"Failed to download the zip file. Status code: {response.status_code}"
             )
 
-        source_file = extracted_dir + "/0001.wav"
-        destination_file = path + "audio2.mp3"
-        ffmpeg.input(source_file).output(destination_file, format="mp3").run()
+        # source_file = extracted_dir + "/0001.wav"
+        # destination_file = path + "audio2.mp3"
+        # ffmpeg.input(source_file).output(destination_file, format="mp3").run()
 
-        print("DONE!")
+        # print("DONE!")

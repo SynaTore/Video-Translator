@@ -8,12 +8,10 @@ class Converter:
         self.file = file
     
 
-    def mp3_from_video(self, path):
+    def mp3_from_video(self, path, audio_name):
 
         videoFile = VideoFileClip(self.file)
-        videoFile.audio.write_audiofile(path + 'audio1.mp3')
-
-        return path + 'audio1.mp3'
+        videoFile.audio.write_audiofile(path + audio_name)
 
     def text_to_audio(self, text: str):
 
