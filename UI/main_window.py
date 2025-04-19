@@ -4,8 +4,8 @@ from PyQt6.QtWidgets import (
     QMessageBox, QProgressBar, QFrame, QGridLayout, QSlider,
     QStackedWidget, QToolButton, QStyleFactory
 )
-from PyQt6.QtCore import Qt, QUrl, QThread, pyqtSignal, QSize
-from PyQt6.QtGui import QIcon, QFont, QPalette, QColor
+from PyQt6.QtCore import Qt, QUrl, QThread, pyqtSignal, QSize, QMimeData
+from PyQt6.QtGui import QIcon, QFont, QPalette, QColor, QDragEnterEvent, QDropEvent
 from PyQt6.QtMultimedia import QMediaPlayer, QAudioOutput
 from PyQt6.QtMultimediaWidgets import QVideoWidget
 import os
@@ -14,6 +14,7 @@ from Video_Translator import VideoTranslate
 import subprocess
 import platform
 import logging
+import utils
 
 class TranslationWorker(QThread):
     progress = pyqtSignal(int)
@@ -47,7 +48,9 @@ class MainWindow(QMainWindow):
                 "voices": [
                     "en-US-JennyNeural",
                     "en-US-GuyNeural",
-                    "en-US-AriaNeural"
+                    "en-US-AriaNeural",
+                    "en-US-SaraNeural",
+                    "en-US-ChristopherNeural"
                 ]
             },
             "zh-CN": {
@@ -55,7 +58,9 @@ class MainWindow(QMainWindow):
                 "voices": [
                     "zh-CN-XiaoxiaoNeural",
                     "zh-CN-YunxiNeural",
-                    "zh-CN-XiaochenNeural"
+                    "zh-CN-XiaochenNeural",
+                    "zh-CN-YunjianNeural",
+                    "zh-CN-XiaoyiNeural"
                 ]
             },
             "ar-SA": {
@@ -63,7 +68,39 @@ class MainWindow(QMainWindow):
                 "voices": [
                     "ar-SA-ZariyahNeural",
                     "ar-SA-HamedNeural",
-                    "ar-SA-FahedNeural"
+                    "ar-SA-FahedNeural",
+                    "ar-SA-NasserNeural",
+                    "ar-SA-AmanyNeural"
+                ]
+            },
+            "fr-FR": {
+                "display": "Français (fr-FR)",
+                "voices": [
+                    "fr-FR-DeniseNeural",
+                    "fr-FR-HenriNeural",
+                    "fr-FR-AlainNeural",
+                    "fr-FR-BrigitteNeural",
+                    "fr-FR-YvesNeural"
+                ]
+            },
+            "de-DE": {
+                "display": "Deutsch (de-DE)",
+                "voices": [
+                    "de-DE-KatjaNeural",
+                    "de-DE-ConradNeural",
+                    "de-DE-AmalaNeural",
+                    "de-DE-BerndNeural",
+                    "de-DE-ElkeNeural"
+                ]
+            },
+            "es-ES": {
+                "display": "Español (es-ES)",
+                "voices": [
+                    "es-ES-ElviraNeural",
+                    "es-ES-AlvaroNeural",
+                    "es-ES-AbrilNeural",
+                    "es-ES-ArnauNeural",
+                    "es-ES-DarioNeural"
                 ]
             }
         }
@@ -95,15 +132,21 @@ class MainWindow(QMainWindow):
         url_layout.setContentsMargins(5, 5, 5, 5)
         
         self.url_input = QLineEdit()
-        self.url_input.setPlaceholderText("Enter YouTube URL")
+        self.url_input.setPlaceholderText("Enter YouTube URL or drag & drop video file")
         self.preview_button = QPushButton("Preview")
         self.preview_button.clicked.connect(self.preview_video)
+        self.browse_button = QPushButton("Browse")
+        self.browse_button.clicked.connect(self.browse_video)
         
-        url_layout.addWidget(QLabel("Video URL:"))
-        url_layout.addWidget(self.url_input, stretch=1)  # Give URL input more space
+        url_layout.addWidget(QLabel("Video Source:"))
+        url_layout.addWidget(self.url_input, stretch=1)
+        url_layout.addWidget(self.browse_button)
         url_layout.addWidget(self.preview_button)
         
         layout.addWidget(url_section)
+        
+        # Enable drag and drop
+        self.setAcceptDrops(True)
         
         # Add a separator line
         line = QFrame()
@@ -381,15 +424,50 @@ class MainWindow(QMainWindow):
                 self.current_video = 'original'
         self.media_player.play()
 
+    def dragEnterEvent(self, event: QDragEnterEvent):
+        if event.mimeData().hasUrls():
+            event.acceptProposedAction()
+
+    def dropEvent(self, event: QDropEvent):
+        files = event.mimeData().urls()
+        if files:
+            file_path = files[0].toLocalFile()
+            if file_path.lower().endswith(('.mp4', '.avi', '.mov', '.wmv', '.mkv')):
+                self.url_input.setText(file_path)
+                self.translator.video_url = None
+                self.translator.video_path = file_path
+                self.preview_video()
+            else:
+                QMessageBox.warning(self, "Invalid File", 
+                                  "Please drop a valid video file (mp4, avi, mov, wmv, mkv)")
+
+    def browse_video(self):
+        file_path, _ = QFileDialog.getOpenFileName(
+            self,
+            "Select Video File",
+            "",
+            "Video Files (*.mp4 *.avi *.mov *.wmv *.mkv)"
+        )
+        if file_path:
+            self.url_input.setText(file_path)
+            self.translator.video_url = None
+            self.translator.video_path = file_path
+            self.preview_video()
+
     def preview_video(self):
         if not self.url_input.text():
-            self.logger.warning("No URL provided for preview")
+            self.logger.warning("No URL or file provided for preview")
             return
         
         try:
-            self.logger.info(f"Previewing video from URL: {self.url_input.text()}")
-            self.translator.video_url = self.url_input.text()
-            video_path = self.translator._VideoTranslate__download_video()
+            self.logger.info(f"Previewing video from source: {self.url_input.text()}")
+            if utils.is_url(self.url_input.text()):
+                self.translator.video_url = self.url_input.text()
+                self.translator.video_path = None
+                video_path = self.translator._VideoTranslate__download_video()
+            else:
+                video_path = self.url_input.text()
+            
             self.original_path = video_path
             self.current_video = 'original'
             self.media_player.setSource(QUrl.fromLocalFile(video_path))

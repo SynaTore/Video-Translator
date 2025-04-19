@@ -14,15 +14,18 @@ class VideoTranslate:
     def __init__(self, settings: any) -> None:
         self.settings = settings
         self.video_url = None
+        self.video_path = None
 
     def translate_from_url(self, source_language, target_language, voice, final_name, translation_language, option):
-        if not self.video_url:
-            raise ValueError("Video URL not set")
+        if not self.video_url and not self.video_path:
+            raise ValueError("No video source provided (URL or file)")
 
         temp_files = []
         try:
-            video_path = self.__download_video()
-            temp_files.append(video_path)
+            # If we have a direct video path, use it, otherwise download from URL
+            video_path = self.video_path if self.video_path else self.__download_video()
+            if not self.video_path:  # Only add to temp files if it was downloaded
+                temp_files.append(video_path)
             
             audio_path = settings.VIDEOS_PATH + "audio1.mp3"
             self.__get_mp3_from_mp4(video_path)
@@ -99,4 +102,3 @@ class VideoTranslate:
 
          speech  = Speech(azure_key, region)
          speech.text_to_mp3_long(text, voice, self.settings.VIDEOS_PATH)
-         
